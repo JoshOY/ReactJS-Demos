@@ -69,6 +69,26 @@ var CommentBox = React.createClass({
         });
     },
 
+    handleCommentSubmit: function(comment) {
+        // Optimization: optimistic updates
+        var comments = this.state.data;
+        var newComments = comments.concat([comment]);
+        this.setState({data: newComments});
+
+        $.ajax({
+            url: this.props.url,
+            dataType: 'json',
+            type: 'POST',
+            data: comment,
+            success: function(data) {
+                this.setState({data: data});
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error(this.props.url, status, err.toString());
+            }.bind(this)
+        });
+    },
+
     /*
      * componentDidMount is a method called automatically by React when a component is rendered
      * */
@@ -82,11 +102,38 @@ var CommentBox = React.createClass({
             <div className="commentBox">
                 <h1>Comments</h1>
                 <CommentList data={this.state.data} pollInterval={2000} />
-                <CommentForm />
+                <CommentForm onCommentSubmit={this.handleCommentSubmit} />
             </div>
         );
     }
 });
 
+var CommentForm = React.createClass( {
+    handleSubmit: function(e) {
+        // Call preventDefault() on the event to prevent the browser's default action of submitting the form.
+        e.preventDefault();
+        // We use the ref attribute to assign a name to a child component and this.refs to reference the component.
+        // We can call React.findDOMNode(component) on a component to get the native browser DOM element.
+        var author = React.findDOMNode(this.refs.author).value.trim();
+        var text = React.findDOMNode(this.refs.text).value.trim();
+        if (!text || !author) {
+            return;
+        }
+        this.props.onCommentSubmit({author: author, text: text});
+        React.findDOMNode(this.refs.author).value = '';
+        React.findDOMNode(this.refs.text).value = '';
+        return;
+    },
+
+    render: function() {
+        return (
+            <form className="commentForm" onSubmit={this.handleSubmit}>
+                <input type="text" placeholder="Your name" ref="author" />
+                <input type="text" placeholder="Say something..." ref="text" />
+                <input type="submit" value="Post now!" />
+            </form>
+        );
+    }
+});
 
 React.render(<CommentBox url="src/comments.json" />, document.getElementById("content"));
