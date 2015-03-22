@@ -101,7 +101,7 @@ var CommentBox = React.createClass({
         return (
             <div className="commentBox">
                 <h1>Comments</h1>
-                <CommentList data={this.state.data} pollInterval={2000} />
+                <CommentList data={this.state.data} pollInterval={9999999999} />
                 <CommentForm onCommentSubmit={this.handleCommentSubmit} />
             </div>
         );
